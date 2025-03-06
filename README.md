@@ -24,15 +24,20 @@ You should use this with `org-hide-emphasis-markers` set to `t`:
 
 ;; or put in the mode hook
 (add-hook 'org-mode-hook (lambda () (org-expose-emphasis-markers-mode t)))
+
 ```
 
-Config:
-
+You can change the expose scope by variable `org-expose-emphasis-markers-type`, or qucickly
+switch it through command `M-x org-expose-emphasis-markers-switch-scope`:
 ```elisp
-;; You can set `org-expose-emphasis-markers-type' to 'sentence or 'paragraph to
-;; change the auto expose scope.
-
+;; Scope type can be changed to 'line or 'paragraph
 (setq org-expose-emphasis-markers-type 'paragraph)
+
+;; New scope type can be created by specializing `org-expose-emphasis-markers-bounds'
+(cl-defmethod org-expose-emphasis-markers-bounds ((_type (eql 'new-type-name)))
+  ;; return a cons cell type, representing the scope bounds
+  )
+(setq org-expose-emphasis-markers-type 'new-type-name)
 ```
 
 ## Miscellaneous

@@ -51,8 +51,8 @@
 (defcustom org-expose-emphasis-markers-type nil
   "The type represent scope to show hidden markers.
 
-The value is a symbol like \\='paragraph, \\='sentence or nil. The
-default value is nil, representing emphasis element around point."
+The value is a symbol like \\='item, \\='line or \\='paragraph. Set to nil
+means \\='item, representing scope of emphasis element at point."
   :type 'symbol)
 
 (cl-defgeneric org-expose-emphasis-markers-bounds (_type)
@@ -72,8 +72,8 @@ Bounds of emphasis elements around point is returned by default."
       (unless (cdr bounds) (setcdr bounds (point))))
     bounds))
 
-(cl-defmethod org-expose-emphasis-markers-bounds ((_type (eql 'sentence)))
-  "Return the bounds of sentence TYPE at point."
+(cl-defmethod org-expose-emphasis-markers-bounds ((_type (eql 'line)))
+  "Return the bounds of line TYPE at point."
   (cons (line-beginning-position) (line-end-position)))
 
 (cl-defmethod org-expose-emphasis-markers-bounds ((_type (eql 'paragraph)))
@@ -115,6 +115,21 @@ Bounds of emphasis elements around point is returned by default."
         (user-error "This only works when `org-hide-emphasis-markers' is t"))
     (remove-hook 'post-command-hook #'org-expose-emphasis-markers--expose-function t))
   (font-lock-flush))
+
+(defun org-expose-emphasis-markers-switch-scope ()
+  "Helper to switch scope type quickly."
+  (interactive nil org-mode)
+  (let* ((types (cl-loop ; collect the types from all the generic functions
+                 for m in (cl--generic-method-table (cl--generic #'org-expose-emphasis-markers-bounds))
+                 for n = (car (cl--generic-method-specializers m))
+                 unless (eq n t) collect (substring (format "%s" (cadr n)) 1)))
+         (type (completing-read "Switch to scope type: "
+                                (cons "item" types) nil t nil nil
+                                (if org-expose-emphasis-markers-type
+                                    (format "%s" org-expose-emphasis-markers-type)
+                                  "item"))))
+    (setq org-expose-emphasis-markers-type (intern type))
+    (message "Scope type of `org-expose-emphasis-markers-mode' changed to '%s" type)))
 
 (provide 'org-expose-emphasis-markers)
 
