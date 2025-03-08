@@ -48,16 +48,19 @@
   :group 'org
   :prefix 'org-expose-emphasis-markers)
 
-(defcustom org-expose-emphasis-markers-type nil
+(defcustom org-expose-emphasis-markers-type 'item
   "The type represent scope to show hidden markers.
 
-The value is a symbol like \\='item, \\='line or \\='paragraph. Set to nil
-means \\='item, representing scope of emphasis element at point."
+The value is a symbol like \\='item, \\='line or \\='paragraph. Default \\=item
+representing scope of emphasis element at point. If set to other value, the mode
+will not work, as same as turn it off."
   :type 'symbol)
 
 (cl-defgeneric org-expose-emphasis-markers-bounds (_type)
-  "Return the bounds of element at point according TYPE.
-Bounds of emphasis elements around point is returned by default."
+  "Return the bounds of element at point according TYPE.")
+
+(cl-defmethod org-expose-emphasis-markers-bounds ((_type (eql 'item)))
+  "Return the bounds of current emphasis element TYPE at point."
   (let ((bounds
          (or (org-find-text-property-region (point) 'org-emphasis)
              (let ((before (unless (bobp)
@@ -139,10 +142,10 @@ Bounds of emphasis elements around point is returned by default."
                  for n = (car (cl--generic-method-specializers m))
                  unless (eq n t) collect (substring (format "%s" (cadr n)) 1)))
          (type (completing-read "Switch to scope type: "
-                                (cons "item" types) nil t nil nil
+                                (cons "disabled" types) nil t nil nil
                                 (if org-expose-emphasis-markers-type
                                     (format "%s" org-expose-emphasis-markers-type)
-                                  "item"))))
+                                  "disabled"))))
     (setq org-expose-emphasis-markers-type (intern type))
     (message "Scope type of `org-expose-emphasis-markers-mode' changed to '%s" type)))
 

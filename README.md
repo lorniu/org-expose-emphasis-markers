@@ -30,8 +30,12 @@ You should use this with `org-hide-emphasis-markers` set to `t`:
 You can change the expose scope by variable `org-expose-emphasis-markers-type`, or qucickly
 switch it through command `M-x org-expose-emphasis-markers-switch-scope`:
 ```elisp
-;; Scope type can be changed to 'line or 'paragraph
+;; Default scope type is 'item, can be changed to 'line or 'paragraph
 (setq org-expose-emphasis-markers-type 'paragraph)
+
+;; If set to other value, the mode will not work, just like turn it off
+;; So you can inhibit the function by command `org-expose-emphasis-markers-switch-scope' quickly
+(setq org-expose-emphasis-markers-type 'disabled)
 
 ;; New scope type can be created by specializing `org-expose-emphasis-markers-bounds'
 (cl-defmethod org-expose-emphasis-markers-bounds ((_type (eql 'new-type-name)))
