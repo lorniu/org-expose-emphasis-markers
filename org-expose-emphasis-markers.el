@@ -51,13 +51,14 @@
 (defcustom org-expose-emphasis-markers-type 'item
   "The type represent scope to show hidden markers.
 
-The value is a symbol like \\='item, \\='line or \\='paragraph. Default \\=item
+The value is a symbol like \\='item, \\='line or \\='paragraph. Default \\='item
 representing scope of emphasis element at point. If set to other value, the mode
 will not work, as same as turn it off."
   :type 'symbol)
 
 (cl-defgeneric org-expose-emphasis-markers-bounds (_type)
-  "Return the bounds of element at point according TYPE.")
+  "Return the bounds of element at point according TYPE."
+  nil)
 
 (cl-defmethod org-expose-emphasis-markers-bounds ((_type (eql 'item)))
   "Return the bounds of current emphasis element TYPE at point."
@@ -81,9 +82,9 @@ will not work, as same as turn it off."
 
 (cl-defmethod org-expose-emphasis-markers-bounds ((_type (eql 'paragraph)))
   "Return the bounds of paragraph TYPE at point."
-  (save-excursion
-    (backward-paragraph)
-    (cons (point) (progn (forward-paragraph) (point)))))
+  (unless (= (line-beginning-position) (line-end-position))
+    (cons (save-excursion (backward-paragraph) (point))
+          (save-excursion (forward-paragraph) (point)))))
 
 (defun org-expose-emphasis-markers--expose-function ()
   "Auto expose hidden emphasis markers at/around point."
@@ -146,6 +147,7 @@ will not work, as same as turn it off."
                                 (if org-expose-emphasis-markers-type
                                     (format "%s" org-expose-emphasis-markers-type)
                                   "disabled"))))
+    (font-lock-flush)
     (setq org-expose-emphasis-markers-type (intern type))
     (message "Scope type of `org-expose-emphasis-markers-mode' changed to '%s" type)))
 
