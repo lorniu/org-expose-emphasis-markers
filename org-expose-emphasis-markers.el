@@ -97,8 +97,23 @@ Bounds of emphasis elements around point is returned by default."
           (font-lock-ensure beg end)))
       ;; Current emphasis element, show the markers
       (when bounds
-        (with-silent-modifications
-          (remove-text-properties (car bounds) (cdr bounds) '(invisible t))))
+        (cl-labels ((remove-invisible (beg end)
+                      (with-silent-modifications
+                        (remove-text-properties
+                         (max (- beg 1) (point-min))
+                         (min (+ end 1) (point-max))
+                         '(invisible t)))))
+          (if (memq org-expose-emphasis-markers-type '(nil item))
+              (remove-invisible (car bounds) (cdr bounds))
+            (save-excursion
+              (save-restriction
+                (narrow-to-region (car bounds) (cdr bounds))
+                (goto-char (point-min))
+                (while (< (point) (point-max))
+                  (let ((p (get-text-property (point) 'org-emphasis))
+                        (n (next-property-change (point))))
+                    (when (and p n) (remove-invisible (point) n))
+                    (goto-char (or n (point-max))))))))))
       (setq org-expose-emphasis-markers--current-bounds bounds))))
 
 (defvar-local org-expose-emphasis-markers--current-bounds nil)
