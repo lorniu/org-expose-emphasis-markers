@@ -51,9 +51,9 @@
 (defcustom org-expose-emphasis-markers-type 'item
   "The type represent scope to show hidden markers.
 
-The value is a symbol like \\='item, \\='line or \\='paragraph. Default \\='item
-representing scope of emphasis element at point. If set to other value, the mode
-will not work, as same as turn it off."
+The value is a symbol like \\='item, \\='line or \\='paragraph.  Default
+\\='item representing scope of emphasis element at point.  If set to other
+value, the mode will not work, as same as turn it off."
   :type 'symbol)
 
 (cl-defgeneric org-expose-emphasis-markers-bounds (_type)
@@ -86,6 +86,8 @@ will not work, as same as turn it off."
     (cons (save-excursion (backward-paragraph) (point))
           (save-excursion (forward-paragraph) (point)))))
 
+(defvar-local org-expose-emphasis-markers--current-bounds nil)
+
 (defun org-expose-emphasis-markers--expose-function ()
   "Auto expose hidden emphasis markers at/around point."
   (when org-hide-emphasis-markers
@@ -113,20 +115,18 @@ will not work, as same as turn it off."
               (save-restriction
                 (narrow-to-region (car bounds) (cdr bounds))
                 (goto-char (point-min))
-                (while (< (point) (point-max))
+                (while (not (eobp))
                   (let ((p (get-text-property (point) 'org-emphasis))
                         (n (next-property-change (point))))
                     (when (and p n) (remove-invisible (point) n))
                     (goto-char (or n (point-max))))))))))
       (setq org-expose-emphasis-markers--current-bounds bounds))))
 
-(defvar-local org-expose-emphasis-markers--current-bounds nil)
-
 ;;;###autoload
 (define-minor-mode org-expose-emphasis-markers-mode
   "Minor mode for auto expose hidden emphasis markers in org mode."
   :init-value nil
-  (unless (eq major-mode 'org-mode)
+  (unless (derived-mode-p 'org-mode)
     (user-error "Cannot turn on this mode outside org-mode buffers"))
   (if org-expose-emphasis-markers-mode
       (if org-hide-emphasis-markers
