@@ -1,4 +1,5 @@
 [![License: GPL-3.0](http://img.shields.io/:license-gpl3-blue.svg)](https://opensource.org/licenses/GPL-3.0)
+[![MELPA](https://melpa.org/packages/org-expose-emphasis-markers-badge.svg)](https://melpa.org/#/org-expose-emphasis-markers)
 
 Automatically show hidden emphasis markers at point in org mode.
 
@@ -10,7 +11,7 @@ hide when cursor leave.
 
 ## Get Started
 
-First, install this package, and load it when necessary:
+First, install this package from MELPA, and load it when necessary:
 ```elisp
 (require 'org-expose-emphasis-markers)
 ```
