@@ -45,6 +45,14 @@ switch it through command `M-x org-expose-emphasis-markers-switch-scope`:
 (setq org-expose-emphasis-markers-type 'new-type-name)
 ```
 
+You can config to determine dynamically whether the mode should be inhibited.
+By default, when current buffer is read only, the mode should not work.
+Config with `org-expose-emphasis-markers-inhibit-determine-function` for other cases. For example:
+```elisp
+(setq org-expose-emphasis-markers-inhibit-determine-function
+      (lambda () (or buffer-read-only (other-cases-mode-should-inhibit))))
+```
+
 ## Miscellaneous
 
 Issues and PRs are welcome. Happy good day.

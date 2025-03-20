@@ -86,41 +86,51 @@ value, the mode will not work, as same as turn it off."
     (cons (save-excursion (backward-paragraph) (point))
           (save-excursion (forward-paragraph) (point)))))
 
+(defvar org-expose-emphasis-markers-inhibit-determine-function
+  #'org-expose-emphasis-markers-default-should-inhibit
+  "Function to determine whether the mode should be inhibited.
+This function will be called with no arguments.")
+
+(defun org-expose-emphasis-markers-default-should-inhibit ()
+  "Check whether the mode should be inhibited."
+  buffer-read-only)
+
 (defvar-local org-expose-emphasis-markers--current-bounds nil)
 
 (defun org-expose-emphasis-markers--expose-function ()
   "Auto expose hidden emphasis markers at/around point."
-  (when org-hide-emphasis-markers
-    (let ((bounds (org-expose-emphasis-markers-bounds org-expose-emphasis-markers-type)))
-      ;; Previous emphasis element, reset
-      (when (and org-expose-emphasis-markers--current-bounds
-                 (not (equal org-expose-emphasis-markers--current-bounds bounds)))
-        (let ((beg (car org-expose-emphasis-markers--current-bounds))
-              (end (cdr org-expose-emphasis-markers--current-bounds)))
-          (setq beg (save-excursion (goto-char beg) (line-beginning-position)))
-          (setq end (save-excursion (goto-char end) (line-end-position)))
-          (font-lock-flush beg end)
-          (font-lock-ensure beg end)))
-      ;; Current emphasis element, show the markers
-      (when bounds
-        (cl-labels ((remove-invisible (beg end)
-                      (with-silent-modifications
-                        (remove-text-properties
-                         (max (- beg 1) (point-min))
-                         (min (+ end 1) (point-max))
-                         '(invisible t)))))
-          (if (memq org-expose-emphasis-markers-type '(nil item))
-              (remove-invisible (car bounds) (cdr bounds))
-            (save-excursion
-              (save-restriction
-                (narrow-to-region (car bounds) (cdr bounds))
-                (goto-char (point-min))
-                (while (not (eobp))
-                  (let ((p (get-text-property (point) 'org-emphasis))
-                        (n (next-property-change (point))))
-                    (when (and p n) (remove-invisible (point) n))
-                    (goto-char (or n (point-max))))))))))
-      (setq org-expose-emphasis-markers--current-bounds bounds))))
+  (let* ((inhibit (or (not org-hide-emphasis-markers)
+                      (funcall org-expose-emphasis-markers-inhibit-determine-function)))
+         (bounds (unless inhibit (org-expose-emphasis-markers-bounds org-expose-emphasis-markers-type))))
+    ;; Previous emphasis element, reset
+    (when (and org-expose-emphasis-markers--current-bounds
+               (or inhibit (not (equal org-expose-emphasis-markers--current-bounds bounds))))
+      (let ((beg (car org-expose-emphasis-markers--current-bounds))
+            (end (cdr org-expose-emphasis-markers--current-bounds)))
+        (setq beg (save-excursion (goto-char beg) (line-beginning-position)))
+        (setq end (save-excursion (goto-char end) (line-end-position)))
+        (font-lock-flush beg end)
+        (font-lock-ensure beg end)))
+    ;; Current emphasis element, show the markers
+    (when bounds
+      (cl-labels ((remove-invisible (beg end)
+                    (with-silent-modifications
+                      (remove-text-properties
+                       (max (- beg 1) (point-min))
+                       (min (+ end 1) (point-max))
+                       '(invisible t)))))
+        (if (memq org-expose-emphasis-markers-type '(nil item))
+            (remove-invisible (car bounds) (cdr bounds))
+          (save-excursion
+            (save-restriction
+              (narrow-to-region (car bounds) (cdr bounds))
+              (goto-char (point-min))
+              (while (not (eobp))
+                (let ((p (get-text-property (point) 'org-emphasis))
+                      (n (next-property-change (point))))
+                  (when (and p n) (remove-invisible (point) n))
+                  (goto-char (or n (point-max))))))))))
+    (setq org-expose-emphasis-markers--current-bounds bounds)))
 
 ;;;###autoload
 (define-minor-mode org-expose-emphasis-markers-mode
@@ -131,7 +141,8 @@ value, the mode will not work, as same as turn it off."
   (if org-expose-emphasis-markers-mode
       (if org-hide-emphasis-markers
           (add-hook 'post-command-hook #'org-expose-emphasis-markers--expose-function -90 t)
-        (user-error "This only works when `org-hide-emphasis-markers' is t"))
+        (org-expose-emphasis-markers-mode -1)
+        (message "Expose emphasis markers mode only works when `org-hide-emphasis-markers' is t"))
     (remove-hook 'post-command-hook #'org-expose-emphasis-markers--expose-function t))
   (font-lock-flush))
 
