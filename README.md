@@ -9,36 +9,39 @@ In org mode, hide emphasis markers can make reading nice, but not good for editi
 Here provide a mode to let hidden markers auto expose when the cursor on, and auto
 hide when cursor leave.
 
-## Get Started
+## Usage
 
-First, install this package from MELPA, and load it when necessary:
+Install this package from MELPA, and load it when necessary:
 ```elisp
 (require 'org-expose-emphasis-markers)
 ```
 
-You should use this with `org-hide-emphasis-markers` set to `t`:
+Then config and turn on the mode:
 ```elisp
+;; 1. make sure `org-hide-emphasis-markers' is true
 (setq org-hide-emphasis-markers t)
 
-;; turn on
-(org-expose-emphasis-markers-mode t)
-
-;; or put in the mode hook
-(add-hook 'org-mode-hook (lambda () (org-expose-emphasis-markers-mode t)))
-
-```
-
-You can change the expose scope by variable `org-expose-emphasis-markers-type`, or qucickly
-switch it through command `M-x org-expose-emphasis-markers-switch-scope`:
-```elisp
-;; Default scope type is 'item, can be changed to 'line or 'paragraph
+;; 2. (optional) set the exposing scope, default value is 'item
 (setq org-expose-emphasis-markers-type 'paragraph)
 
-;; If set to other value, the mode will not work, just like turn it off
-;; So you can inhibit the function by command `org-expose-emphasis-markers-switch-scope' quickly
-(setq org-expose-emphasis-markers-type 'disabled)
+;; 3. turn on the mode
+(add-hook 'org-mode-hook (lambda () (org-expose-emphasis-markers-mode t)))
+```
 
-;; New scope type can be created by specializing `org-expose-emphasis-markers-bounds'
+Use command `org-expose-emphasis-markers` to make thing easier. For example, above can simply as:
+```elisp
+(add-hook 'org-mode-hook (lambda () (org-expose-emphasis-markers 'paragraph)))
+```
+
+The command can be invoked directly to set or change scope quickly:
+```
+M-x org-expose-emphasis-markers
+```
+
+## Advanced
+
+New scope type can be created by specializing `org-expose-emphasis-markers-bounds`:
+```elisp
 (cl-defmethod org-expose-emphasis-markers-bounds ((_type (eql 'new-type-name)))
   ;; return a cons cell type, representing the scope bounds
   )
@@ -52,6 +55,12 @@ Config with `org-expose-emphasis-markers-inhibit-determine-function` for other c
 (setq org-expose-emphasis-markers-inhibit-determine-function
       (lambda () (or buffer-read-only (other-cases-mode-should-inhibit))))
 ```
+
+## Change Log
+
+v0.2:
+* rename `org-expose-emphasis-markers-scope-type` to `org-expose-emphasis-markers`
+* rename type `disabled` to `hide-all`, and add type `show-all`
 
 ## Miscellaneous
 

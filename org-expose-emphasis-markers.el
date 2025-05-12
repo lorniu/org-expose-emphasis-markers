@@ -6,7 +6,7 @@
 ;; URL: https://github.com/lorniu/org-expose-emphasis-markers
 ;; License: GPL-3.0-or-later
 ;; Package-Requires: ((emacs "29.1"))
-;; Version: 0.1
+;; Version: 0.2
 
 ;; This file is not part of GNU Emacs.
 
@@ -35,7 +35,7 @@
 ;;
 ;; Install this packge, then use it by turning on the mode:
 ;;
-;;   (add-hook 'org-mode-hook (lambda () (org-expose-emphasis-markers-mode t)))
+;;   (add-hook 'org-mode-hook (lambda () (org-expose-emphasis-markers 'paragraph)))
 ;;
 
 ;;; Code:
@@ -146,21 +146,32 @@ This function will be called with no arguments.")
     (remove-hook 'post-command-hook #'org-expose-emphasis-markers--expose-function t))
   (font-lock-flush))
 
-(defun org-expose-emphasis-markers-switch-scope ()
-  "Helper to switch scope type quickly."
-  (interactive nil org-mode)
-  (let* ((types (cl-loop ; collect the types from all the generic functions
-                 for m in (cl--generic-method-table (cl--generic #'org-expose-emphasis-markers-bounds))
-                 for n = (car (cl--generic-method-specializers m))
-                 unless (eq n t) collect (substring (format "%s" (cadr n)) 1)))
-         (type (completing-read "Switch to scope type: "
-                                (cons "disabled" types) nil t nil nil
-                                (if org-expose-emphasis-markers-type
-                                    (format "%s" org-expose-emphasis-markers-type)
-                                  "disabled"))))
-    (font-lock-flush)
-    (setq org-expose-emphasis-markers-type (intern type))
-    (message "Scope type of `org-expose-emphasis-markers-mode' changed to '%s" type)))
+;;;###autoload
+(defun org-expose-emphasis-markers (&optional scope)
+  "Switch exposing SCOPE quickly."
+  (interactive (let ((types (cl-loop ; collect the types from all the generic functions
+                             for m in (cl--generic-method-table (cl--generic #'org-expose-emphasis-markers-bounds))
+                             for n = (car (cl--generic-method-specializers m))
+                             unless (eq n t) collect (substring (format "%s" (cadr n)) 1))))
+                 (list (intern (completing-read "Expose scope: "
+                                                `(,@types hide-all show-all) nil t nil nil
+                                                (if org-hide-emphasis-markers
+                                                    (if org-expose-emphasis-markers-mode
+                                                        (format "%s" org-expose-emphasis-markers-type)
+                                                      "hide-all")
+                                                  "show-all")))))
+               org-mode)
+  (pcase scope
+    ('hide-all (setq-local org-hide-emphasis-markers t)
+               (org-expose-emphasis-markers-mode -1))
+    ('show-all (setq-local org-hide-emphasis-markers nil)
+               (org-expose-emphasis-markers-mode -1))
+    (_ (setq-local org-hide-emphasis-markers t)
+       (setq-local org-expose-emphasis-markers-type scope)
+       (org-expose-emphasis-markers-mode 1)))
+  (font-lock-flush)
+  (when (called-interactively-p 'any)
+    (message "Scope type of `org-expose-emphasis-markers-mode' changed to '%s" scope)))
 
 (provide 'org-expose-emphasis-markers)
 
