@@ -115,10 +115,10 @@ This function will be called with no arguments.")
     (when bounds
       (cl-labels ((remove-invisible (beg end)
                     (with-silent-modifications
-                      (remove-text-properties
-                       (max (- beg 1) (point-min))
-                       (min (+ end 1) (point-max))
-                       '(invisible t)))))
+                      (when (> beg (point-min))
+                        (remove-text-properties beg (1+ beg) '(invisible t)))
+                      (when (< end (point-max))
+                        (remove-text-properties (1- end) end '(invisible t))))))
         (if (memq org-expose-emphasis-markers-type '(nil item))
             (remove-invisible (car bounds) (cdr bounds))
           (save-excursion
@@ -127,7 +127,7 @@ This function will be called with no arguments.")
               (goto-char (point-min))
               (while (not (eobp))
                 (let ((p (get-text-property (point) 'org-emphasis))
-                      (n (next-property-change (point))))
+                      (n (next-single-property-change (point) 'org-emphasis)))
                   (when (and p n) (remove-invisible (point) n))
                   (goto-char (or n (point-max))))))))))
     (setq org-expose-emphasis-markers--current-bounds bounds)))
