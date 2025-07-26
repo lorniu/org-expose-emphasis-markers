@@ -6,7 +6,7 @@
 ;; URL: https://github.com/lorniu/org-expose-emphasis-markers
 ;; License: GPL-3.0-or-later
 ;; Package-Requires: ((emacs "29.1"))
-;; Version: 0.2
+;; Version: 0.21
 
 ;; This file is not part of GNU Emacs.
 
